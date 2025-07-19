@@ -3,6 +3,7 @@ import os
 
 class Settings(BaseSettings):
     gemini_api_key: str
+    leetcode_session: str
     question_data_path: str = "data/all_contests_questions.json"
 
     class Config:

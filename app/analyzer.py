@@ -1,4 +1,5 @@
 import re
+import random
 from . import leetcode_client
 from .data_manager import DataManager
 
@@ -42,10 +43,10 @@ def analyze_topic_gaps(username: str, data_manager: DataManager) -> dict:
                 slug = _create_slug(q['title'])
                 if slug not in solved_slugs and slug not in nemesis_slugs:
                     suggestions.append(slug)
-            if len(suggestions) == 5:
-                break
+        
+        random.shuffle(suggestions)
         if suggestions:
-            topic_gaps[topic] = suggestions
+            topic_gaps[topic] = suggestions[:5]
 
     return dict(list(topic_gaps.items())[:5])
 
@@ -82,9 +83,10 @@ def find_nemesis_problems(username: str, data_manager: DataManager) -> dict:
         if data['attempts'] > 2 or not data['accepted']
     }
     
-    # Sort by number of attempts and return the top 5
+    # Sort by number of attempts, shuffle, and return the top 10
     sorted_nemesis = sorted(nemesis_problems.items(), key=lambda item: item[1], reverse=True)
-    return dict(sorted_nemesis[:5])
+    random.shuffle(sorted_nemesis)
+    return dict(sorted_nemesis[:10])
 
 
 def find_related_problems(nemesis_problems: dict, data_manager: DataManager) -> dict:
@@ -107,15 +109,17 @@ def find_related_problems(nemesis_problems: dict, data_manager: DataManager) -> 
                 related_problems[combo_key] = []
 
             # Find other questions with the same three topics
+            potential_problems = []
             for q_slug, q_data in data_manager.questions_by_slug.items():
-                if len(related_problems[combo_key]) >= 4:
-                    break
                 if q_slug == slug:
                     continue
 
                 q_topics = {tag['name'] for tag in q_data.get("topicTags", [])}
                 if set(combo).issubset(q_topics):
-                    related_problems[combo_key].append(q_slug)
+                    potential_problems.append(q_slug)
+            
+            random.shuffle(potential_problems)
+            related_problems[combo_key].extend(potential_problems[:4])
     
     return related_problems
 
