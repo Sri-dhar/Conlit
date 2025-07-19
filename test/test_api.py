@@ -5,7 +5,7 @@ import json
 # To run this script, you need to install the 'requests' library:
 # pip install requests
 
-BASE_URL = "https://conlit.onrender.com"
+BASE_URL = "https://conlit.vercel.app/"
 USERNAME = "sridhartuli"
 
 def print_response(response):
