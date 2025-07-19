@@ -2,7 +2,11 @@ from fastapi import FastAPI, Depends
 from app.data_manager import DataManager
 from app import services
 
-app = FastAPI()
+app = FastAPI(
+    title="Conlit API",
+    description="An API for analyzing LeetCode contest performance.",
+    version="1.0.0",
+)
 data_manager = DataManager()
 
 @app.on_event("startup")
