@@ -1,0 +1,16 @@
+# Core & API
+fastapi
+uvicorn[standard]
+python-dotenv
+pydantic-settings
+httpx
+
+# CLI
+typer[all]
+
+# LLM
+google-generativeai
+
+# Optional (for future database work)
+# sqlalchemy
+# alembic
