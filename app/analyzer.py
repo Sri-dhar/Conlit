@@ -21,7 +21,7 @@ def analyze_topic_gaps(username: str, data_manager: DataManager) -> dict:
         submission_counts[slug]['attempts'] += 1
         if sub['statusDisplay'] == 'Accepted':
             submission_counts[slug]['accepted'] = True
-    nemesis_slugs = {slug for slug, data in submission_counts.items() if data['attempts'] > 2}
+    nemesis_slugs = {slug for slug, data in submission_counts.items() if data['attempts'] > 1}
 
     solved_topics = set()
     for slug in solved_slugs:
@@ -77,10 +77,10 @@ def find_nemesis_problems(username: str, data_manager: DataManager) -> dict:
         if sub['statusDisplay'] == 'Accepted':
             submission_counts[slug]['accepted'] = True
 
-    # A nemesis problem is one that took more than 2 attempts OR is unsolved.
+    # A nemesis problem is one that took more than 1 attempt OR is unsolved.
     nemesis_problems = {
         slug: data['attempts'] for slug, data in submission_counts.items()
-        if data['attempts'] > 2 or not data['accepted']
+        if data['attempts'] > 1 or not data['accepted']
     }
     
     # Sort by number of attempts, shuffle, and return the top 10

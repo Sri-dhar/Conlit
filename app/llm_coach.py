@@ -46,7 +46,7 @@ def generate_coaching_plan(username: str, data_manager) -> dict:
         f"1. A brief, encouraging introduction.\n"
         f"2. A 'focus_areas' array, with each element being an object containing a 'topic' and a 'reason'.\n"
         f"3. A 'suggested_problems' array, with each element being an object containing a 'slug', 'reason', and 'difficulty'.\n"
-        f"Select a maximum of 3 focus areas and 5 suggested problems in total. Prioritize problems from the nemesis list and the related problems list."
+        f"Select a maximum of 4 focus areas and 8 suggested problems in total. Prioritize problems from the nemesis list and the related problems list."
     )
     
     try:
