@@ -16,6 +16,15 @@ def startup_event():
 def get_data_manager():
     return data_manager
 
+@app.get("/")
+def read_root():
+    return {
+        "message": "Welcome to the Conlit API!",
+        "docs": "/docs",
+        "redoc": "/redoc",
+        "paths": [route.path for route in app.routes]
+    }
+
 @app.get("/v1/user/{username}/profile")
 def get_user_profile(username: str):
     return services.get_user_profile(username)
