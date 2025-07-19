@@ -17,9 +17,9 @@ def generate_coaching_plan(username: str, data_manager) -> dict:
     if user_submissions:
         solved_slugs = {_create_slug(sub['title']) for sub in user_submissions if sub['statusDisplay'] == 'Accepted'}
     
-    print("===================SOLVEDSLUGS========================")
-    print(solved_slugs)
-    print("===================SOLVEDSLUGS========================")
+    # print("===================SOLVEDSLUGS========================")
+    # print(solved_slugs)
+    # print("===================SOLVEDSLUGS========================")
 
     topic_gaps = analyzer.analyze_topic_gaps(username, data_manager)
     nemesis_problems = analyzer.find_nemesis_problems(username, data_manager)
