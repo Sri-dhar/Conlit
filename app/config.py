@@ -1,9 +1,10 @@
 from pydantic_settings import BaseSettings
 import os
+from typing import Optional
 
 class Settings(BaseSettings):
     gemini_api_key: str
-    leetcode_session: str
+    leetcode_session: Optional[str] = None
     
     data_dir: str = "data"
     
