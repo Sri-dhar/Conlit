@@ -29,6 +29,9 @@ def _create_slug(title: str) -> str:
     return re.sub(r'\W+', '-', title.lower()).strip('-')
 
 def analyze_topic_gaps(username: str, data_manager: DataManager, leetcode_session: str = None) -> dict:
+    solved_slugs = set()
+    
+    # Determine solved slugs based on session availability
     if leetcode_session:
         cached_data = _read_cache(username)
         current_submission_count = leetcode_client.get_user_submission_count(username)
@@ -40,30 +43,36 @@ def analyze_topic_gaps(username: str, data_manager: DataManager, leetcode_sessio
             print(f"Fetching fresh data for {username}")
             try:
                 solved_titles = leetcode_client.get_solved_questions(username, leetcode_session)
-                solved_slugs = {_create_slug(title) for title in solved_titles}
-                _write_cache(username, {"submission_count": current_submission_count, "solved_slugs": list(solved_slugs)})
+                if solved_titles:
+                    solved_slugs = {_create_slug(title) for title in solved_titles}
+                    _write_cache(username, {"submission_count": current_submission_count, "solved_slugs": list(solved_slugs)})
             except Exception as e:
                 return {"error": f"Could not fetch solved questions: {e}"}
-    else:
+    
+    # Fallback or default to public submissions if no session or fresh data fetch fails
+    if not solved_slugs:
         user_submissions = leetcode_client.get_user_submissions(username, limit=1000)
         if not user_submissions:
             return {"error": "Could not fetch user submissions."}
         solved_slugs = {_create_slug(sub['title']) for sub in user_submissions if sub['statusDisplay'] == 'Accepted'}
 
-    user_submissions = leetcode_client.get_user_submissions(username, limit=1000)
-    if not user_submissions:
-        return {"error": "Could not fetch user submissions."}
-    
+    # Get all user submissions to calculate nemesis problems
+    all_submissions = leetcode_client.get_user_submissions(username, limit=1000)
+    if not all_submissions:
+        return {"error": "Could not fetch user submissions for nemesis calculation."}
+
     submission_counts = {}
-    for sub in user_submissions:
+    for sub in all_submissions:
         slug = _create_slug(sub['title'])
         if slug not in submission_counts:
             submission_counts[slug] = {'accepted': False, 'attempts': 0}
         submission_counts[slug]['attempts'] += 1
         if sub['statusDisplay'] == 'Accepted':
             submission_counts[slug]['accepted'] = True
-    nemesis_slugs = {slug for slug, data in submission_counts.items() if data['attempts'] > 1}
+    
+    nemesis_slugs = {slug for slug, data in submission_counts.items() if data['attempts'] > 1 and not data['accepted']}
 
+    # Calculate topic gaps
     solved_topics = set()
     for slug in solved_slugs:
         question = data_manager.get_question_by_slug(slug)
@@ -105,30 +114,12 @@ def analyze_unsolved_contest_problems(username: str, data_manager: DataManager) 
     return {"unsolved_contests": unsolved_problems[:5]} # Return top 5
 
 def find_nemesis_problems(username: str, data_manager: DataManager, leetcode_session: str = None) -> dict:
-    if leetcode_session:
-        cached_data = _read_cache(username)
-        current_submission_count = leetcode_client.get_user_submission_count(username)
-
-        if cached_data and cached_data.get("submission_count") == current_submission_count:
-            print(f"Using cached data for {username}")
-            solved_slugs = set(cached_data["solved_slugs"])
-        else:
-            print(f"Fetching fresh data for {username}")
-            try:
-                solved_titles = leetcode_client.get_solved_questions(username, leetcode_session)
-                solved_slugs = {_create_slug(title) for title in solved_titles}
-                _write_cache(username, {"submission_count": current_submission_count, "solved_slugs": list(solved_slugs)})
-            except Exception as e:
-                return {"error": f"Could not fetch solved questions: {e}"}
-    else:
-        user_submissions = leetcode_client.get_user_submissions(username, limit=1000)
-        if not user_submissions:
-            return {"error": "Could not fetch user submissions."}
-        solved_slugs = {_create_slug(sub['title']) for sub in user_submissions if sub['statusDisplay'] == 'Accepted'}
-
+    # This function analyzes recent submissions to find problems that were attempted
+    # multiple times. It does not require a full list of solved problems, so the
+    # session-based fetching logic was removed to simplify and avoid confusion.
     submissions = leetcode_client.get_user_submissions(username, limit=1000)
     if not submissions:
-        return {"error": "Could not fetch submissions."}
+        return {"error": "Could not fetch user submissions for nemesis analysis."}
 
     submission_counts = {}
     for sub in submissions:

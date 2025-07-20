@@ -109,7 +109,7 @@ if __name__ == "__main__":
         BASE_URL = DEPLOYED_BASE_URL
     
     CHECK_NORMAL = True
-    if len(sys.argv) > 2 and sys.argv[2] == "not-normal":
+    if (len(sys.argv) > 1 and sys.argv[1] == "not-normal") or (len(sys.argv) > 2 and sys.argv[2] == "not-normal"):
         CHECK_NORMAL = False
         
     cache_file = f"/tmp/cache/{USERNAME}_data.json"
