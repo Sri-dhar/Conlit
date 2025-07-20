@@ -5,7 +5,7 @@ import json
 from . import leetcode_client
 from .data_manager import DataManager
 
-CACHE_DIR = "cache"
+CACHE_DIR = "/tmp/cache"
 if not os.path.exists(CACHE_DIR):
     os.makedirs(CACHE_DIR)
 

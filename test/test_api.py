@@ -101,7 +101,7 @@ def test_api():
 
 if __name__ == "__main__":
     # Clear cache before running tests
-    cache_file = f"cache/{USERNAME}_data.json"
+    cache_file = f"/tmp/cache/{USERNAME}_data.json"
     if os.path.exists(cache_file):
         os.remove(cache_file)
         print(f"Cleared cache file: {cache_file}")
