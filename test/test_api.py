@@ -1,12 +1,19 @@
 import requests
 import json
+import os
+from dotenv import load_dotenv
 
-# This script tests the deployed Conlit API.
+# Load environment variables from .env file
+load_dotenv()
+
+# This script tests the Conlit API.
 # To run this script, you need to install the 'requests' library:
 # pip install requests
 
-BASE_URL = "https://conlit.vercel.app/"
+# The base URL for the local API
+BASE_URL = "http://127.0.0.1:8000"
 USERNAME = "sridhartuli"
+LEETCODE_SESSION = os.getenv("leetcode_session")
 
 def print_response(response):
     """Prints the status code and formatted JSON response."""
@@ -62,6 +69,30 @@ def test_api():
     nemesis_coach_url = f"{nemesis_url}?coach=true"
     response = requests.get(nemesis_coach_url)
     print_response(response)
+
+    # --- Tests with leetcode_session cookie ---
+    if LEETCODE_SESSION:
+        print("\n--- Testing with leetcode_session cookie ---")
+
+        # Test /analysis endpoint with cookie
+        print("Testing /v1/user/{username}/analysis with cookie")
+        analysis_cookie_url = f"{analysis_url}?leetcode_session={LEETCODE_SESSION}"
+        response = requests.get(analysis_cookie_url)
+        print_response(response)
+
+        # Test /topic-gaps endpoint with cookie
+        print("Testing /v1/user/{username}/analysis/topic-gaps with cookie")
+        topic_gaps_cookie_url = f"{topic_gaps_url}?leetcode_session={LEETCODE_SESSION}"
+        response = requests.get(topic_gaps_cookie_url)
+        print_response(response)
+
+        # Test /nemesis-problems endpoint with cookie
+        print("Testing /v1/user/{username}/analysis/nemesis-problems with cookie")
+        nemesis_cookie_url = f"{nemesis_url}?leetcode_session={LEETCODE_SESSION}"
+        response = requests.get(nemesis_cookie_url)
+        print_response(response)
+    else:
+        print("\nSkipping cookie-based tests: leetcode_session not found in .env file.")
 
 
 if __name__ == "__main__":

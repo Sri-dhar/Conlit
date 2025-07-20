@@ -30,13 +30,13 @@ def get_user_profile(username: str):
     return services.get_user_profile(username)
 
 @app.get("/v1/user/{username}/analysis")
-def get_user_analysis(username: str, coach: bool = False, dm: DataManager = Depends(get_data_manager)):
-    return services.get_full_analysis(username, coach, dm)
+def get_user_analysis(username: str, coach: bool = False, leetcode_session: str = None, dm: DataManager = Depends(get_data_manager)):
+    return services.get_full_analysis(username, coach, dm, leetcode_session)
 
 @app.get("/v1/user/{username}/analysis/topic-gaps")
-def get_topic_gaps(username: str, coach: bool = False, dm: DataManager = Depends(get_data_manager)):
-    return services.get_topic_gaps_analysis(username, coach, dm)
+def get_topic_gaps(username: str, coach: bool = False, leetcode_session: str = None, dm: DataManager = Depends(get_data_manager)):
+    return services.get_topic_gaps_analysis(username, coach, dm, leetcode_session)
 
 @app.get("/v1/user/{username}/analysis/nemesis-problems")
-def get_nemesis_problems(username: str, coach: bool = False, dm: DataManager = Depends(get_data_manager)):
-    return services.get_nemesis_problems_analysis(username, coach, dm)
+def get_nemesis_problems(username: str, coach: bool = False, leetcode_session: str = None, dm: DataManager = Depends(get_data_manager)):
+    return services.get_nemesis_problems_analysis(username, coach, dm, leetcode_session)

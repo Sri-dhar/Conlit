@@ -6,12 +6,22 @@ from .data_manager import DataManager
 def _create_slug(title: str) -> str:
     return re.sub(r'\W+', '-', title.lower()).strip('-')
 
-def analyze_topic_gaps(username: str, data_manager: DataManager) -> dict:
+def analyze_topic_gaps(username: str, data_manager: DataManager, leetcode_session: str = None) -> dict:
+    if leetcode_session:
+        try:
+            solved_titles = leetcode_client.get_solved_questions(username, leetcode_session)
+            solved_slugs = {_create_slug(title) for title in solved_titles}
+        except Exception as e:
+            return {"error": f"Could not fetch solved questions: {e}"}
+    else:
+        user_submissions = leetcode_client.get_user_submissions(username, limit=1000)
+        if not user_submissions:
+            return {"error": "Could not fetch user submissions."}
+        solved_slugs = {_create_slug(sub['title']) for sub in user_submissions if sub['statusDisplay'] == 'Accepted'}
+    
     user_submissions = leetcode_client.get_user_submissions(username, limit=1000)
     if not user_submissions:
         return {"error": "Could not fetch user submissions."}
-
-    solved_slugs = {_create_slug(sub['title']) for sub in user_submissions if sub['statusDisplay'] == 'Accepted'}
     
     submission_counts = {}
     for sub in user_submissions:
@@ -63,7 +73,19 @@ def analyze_unsolved_contest_problems(username: str, data_manager: DataManager) 
     
     return {"unsolved_contests": unsolved_problems[:5]} # Return top 5
 
-def find_nemesis_problems(username: str, data_manager: DataManager) -> dict:
+def find_nemesis_problems(username: str, data_manager: DataManager, leetcode_session: str = None) -> dict:
+    if leetcode_session:
+        try:
+            solved_titles = leetcode_client.get_solved_questions(username, leetcode_session)
+            solved_slugs = {_create_slug(title) for title in solved_titles}
+        except Exception as e:
+            return {"error": f"Could not fetch solved questions: {e}"}
+    else:
+        user_submissions = leetcode_client.get_user_submissions(username, limit=1000)
+        if not user_submissions:
+            return {"error": "Could not fetch user submissions."}
+        solved_slugs = {_create_slug(sub['title']) for sub in user_submissions if sub['statusDisplay'] == 'Accepted'}
+        
     submissions = leetcode_client.get_user_submissions(username, limit=1000)
     if not submissions:
         return {"error": "Could not fetch submissions."}
