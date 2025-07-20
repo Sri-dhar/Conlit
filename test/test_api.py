@@ -10,7 +10,7 @@ load_dotenv()
 # pip install requests
 
 # The base URL for the local API
-BASE_URL = "http://127.0.0.1:8000"
+BASE_URL = "https://conlit.vercel.app/"
 USERNAME = "sridhartuli"
 LEETCODE_SESSION = os.getenv("leetcode_session")
 
