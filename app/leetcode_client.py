@@ -235,15 +235,10 @@ def get_user_submission_count(username: str):
 def get_solved_questions(username: str, cookie: str, is_cn: bool = False):
     """
     Fetches all solved questions for a given LeetCode username and session cookie.
-
-    Args:
-        username: The LeetCode username.
-        cookie: The LEETCODE_SESSION cookie.
-        is_cn: Whether to use the Chinese LeetCode site.
-
-    Returns:
-        A list of solved question titles.
     """
+    if not cookie:
+        raise ValueError("LEETCODE_SESSION cookie is required for this operation.")
+
     base_url = BASE_URL
     graphql_url = f"{base_url}/graphql"
     
@@ -253,73 +248,85 @@ def get_solved_questions(username: str, cookie: str, is_cn: bool = False):
         "Referer": base_url,
     }
 
-    # Get total number of solved questions
     profile_payload = {
         "query": USER_PROFILE_QUERY,
         "variables": {"username": username},
     }
-    response = httpx.post(graphql_url, json=profile_payload, headers=headers, timeout=30)
-    profile_data = response.json()
+    
+    try:
+        response = httpx.post(graphql_url, json=profile_payload, headers=headers, timeout=30)
+        response.raise_for_status()
+        profile_data = response.json()
+    except httpx.HTTPStatusError as e:
+        raise Exception(f"Failed to fetch user profile: {e.response.status_code}")
     
     if "errors" in profile_data:
-        raise Exception(f"GraphQL error: {profile_data['errors']}")
+        # Check for auth-related errors
+        if any("session" in error.get("message", "").lower() for error in profile_data["errors"]):
+            raise Exception("Authentication failed. Your LEETCODE_SESSION cookie may be invalid or expired.")
+        raise Exception(f"GraphQL error on profile fetch: {profile_data['errors']}")
 
-    if not profile_data.get("data", {}).get("matchedUser"):
+    matched_user = profile_data.get("data", {}).get("matchedUser")
+    if not matched_user:
         raise Exception(f"User '{username}' not found.")
 
-    ac_submission_num = profile_data["data"]["matchedUser"]["submitStats"]["acSubmissionNum"]
+    ac_submission_num = matched_user["submitStats"]["acSubmissionNum"]
     total_solved = sum(item['count'] for item in ac_submission_num)
     
+    if total_solved == 0:
+        return []
+
     print(f"Found {total_solved} solved questions for user {username}. Fetching titles...")
 
     solved_questions = set()
     offset = 0
     limit = 20
-
     page_num = 0
+
     while len(solved_questions) < total_solved:
         page_num += 1
-        # Safeguard against infinite loops
-        if page_num > (total_solved // limit) + 2:
+        if page_num > (total_solved // limit) + 5: # Increased safeguard
             print("Warning: Exceeded expected number of pages. Terminating.")
             break
 
-        variables = {
-            "offset": offset,
-            "limit": limit,
-            "questionSlug": "",
-        }
+        variables = {"offset": offset, "limit": limit, "questionSlug": ""}
+        payload = {"query": SUBMISSIONS_QUERY, "variables": variables}
         
-        payload = {
-            "query": SUBMISSIONS_QUERY,
-            "variables": variables,
-        }
-        
-        response = httpx.post(graphql_url, json=payload, headers=headers, timeout=30)
-        data = response.json()
-
-        print(f"Fetched page {offset // limit + 1}...")
+        try:
+            response = httpx.post(graphql_url, json=payload, headers=headers, timeout=30)
+            response.raise_for_status()
+            data = response.json()
+        except httpx.HTTPStatusError as e:
+            print(f"Warning: HTTP error on page {page_num}: {e.response.status_code}")
+            break # Stop fetching on error
 
         if "errors" in data:
-            # Check for authentication errors
-            if "user" in str(data["errors"]).lower():
-                raise Exception("Authentication failed. Please check your LEETCODE_SESSION cookie.")
-            raise Exception(f"GraphQL error: {data['errors']}")
+            if any("session" in error.get("message", "").lower() for error in data["errors"]):
+                print("Warning: Authentication failed while fetching submissions. Returning partial list.")
+                break
+            print(f"Warning: GraphQL error on page {page_num}: {data['errors']}")
+            break
 
         submission_list = data.get("data", {}).get("submissionList")
-        if not submission_list:
-            raise Exception("Failed to fetch submissions. The API response might have changed.")
+        if not submission_list or not submission_list.get("submissions"):
+            print(f"Warning: No submissions found on page {page_num}. Ending fetch.")
+            break
 
-        submissions = submission_list.get("submissions") or []
-        for submission in submissions:
-            if submission["statusDisplay"] == "Accepted":
-                solved_questions.add(submission["title"])
-
-        # Check for authentication issues after the first page
-        if page_num == 1 and total_solved > 0 and len(solved_questions) == 0:
-            print("Warning: No accepted submissions found on the first page.")
-            print("Please ensure your LEETCODE_SESSION cookie is valid.")
+        submissions = submission_list["submissions"]
+        found_new = False
+        for sub in submissions:
+            if sub["statusDisplay"] == "Accepted":
+                if sub["title"] not in solved_questions:
+                    solved_questions.add(sub["title"])
+                    found_new = True
+        
+        if not found_new and page_num > 1:
+            print("Warning: No new solved questions found. The API might be returning duplicates.")
+            break
 
         offset += limit
+
+    if not solved_questions:
+        print("Warning: Could not retrieve any solved questions. Check your LEETCODE_SESSION cookie.")
 
     return list(solved_questions)

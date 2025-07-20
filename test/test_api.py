@@ -28,53 +28,54 @@ def print_response(response):
 def test_api():
     """Tests all available API endpoints."""
     print(f"Testing API for user: {USERNAME}\n")
-
-    # Test /profile endpoint
-    print("Testing /v1/user/{username}/profile")
-    profile_url = f"{BASE_URL}/v1/user/{USERNAME}/profile"
-    response = requests.get(profile_url)
-    print_response(response)
-
-    # Test /analysis endpoint (no coach)
-    print("Testing /v1/user/{username}/analysis")
-    analysis_url = f"{BASE_URL}/v1/user/{USERNAME}/analysis"
-    response = requests.get(analysis_url)
-    print_response(response)
-
-    # Test /analysis endpoint (with coach)
-    print("Testing /v1/user/{username}/analysis?coach=true")
-    analysis_coach_url = f"{analysis_url}?coach=true"
-    response = requests.get(analysis_coach_url)
-    print_response(response)
-
-    # Test /topic-gaps endpoint (no coach)
-    print("Testing /v1/user/{username}/analysis/topic-gaps")
     topic_gaps_url = f"{BASE_URL}/v1/user/{USERNAME}/analysis/topic-gaps"
-    response = requests.get(topic_gaps_url)
-    print_response(response)
 
-    # Test /topic-gaps endpoint (with coach)
-    print("Testing /v1/user/{username}/analysis/topic-gaps?coach=true")
-    topic_gaps_coach_url = f"{topic_gaps_url}?coach=true"
-    response = requests.get(topic_gaps_coach_url)
-    print_response(response)
+    if CHECK_NORMAL:
+        # Test /profile endpoint
+        print("Testing /v1/user/{username}/profile")
+        profile_url = f"{BASE_URL}/v1/user/{USERNAME}/profile"
+        response = requests.get(profile_url)
+        print_response(response)
 
-    # Test /nemesis-problems endpoint (no coach)
-    print("Testing /v1/user/{username}/analysis/nemesis-problems")
-    nemesis_url = f"{BASE_URL}/v1/user/{USERNAME}/analysis/nemesis-problems"
-    response = requests.get(nemesis_url)
-    print_response(response)
+        # Test /analysis endpoint (no coach)
+        print("Testing /v1/user/{username}/analysis")
+        analysis_url = f"{BASE_URL}/v1/user/{USERNAME}/analysis"
+        response = requests.get(analysis_url)
+        print_response(response)
 
-    # Test /nemesis-problems endpoint (with coach)
-    print("Testing /v1/user/{username}/analysis/nemesis-problems?coach=true")
-    nemesis_coach_url = f"{nemesis_url}?coach=true"
-    response = requests.get(nemesis_coach_url)
-    print_response(response)
+        # Test /analysis endpoint (with coach)
+        print("Testing /v1/user/{username}/analysis?coach=true")
+        analysis_coach_url = f"{analysis_url}?coach=true"
+        response = requests.get(analysis_coach_url)
+        print_response(response)
+
+        # Test /topic-gaps endpoint (no coach)
+        print("Testing /v1/user/{username}/analysis/topic-gaps")
+        response = requests.get(topic_gaps_url)
+        print_response(response)
+
+        # Test /topic-gaps endpoint (with coach)
+        print("Testing /v1/user/{username}/analysis/topic-gaps?coach=true")
+        topic_gaps_coach_url = f"{topic_gaps_url}?coach=true"
+        response = requests.get(topic_gaps_coach_url)
+        print_response(response)
+
+        # Test /nemesis-problems endpoint (no coach)
+        print("Testing /v1/user/{username}/analysis/nemesis-problems")
+        nemesis_url = f"{BASE_URL}/v1/user/{USERNAME}/analysis/nemesis-problems"
+        response = requests.get(nemesis_url)
+        print_response(response)
+
+        # Test /nemesis-problems endpoint (with coach)
+        print("Testing /v1/user/{username}/analysis/nemesis-problems?coach=true")
+        nemesis_coach_url = f"{nemesis_url}?coach=true"
+        response = requests.get(nemesis_coach_url)
+        print_response(response)
 
     # --- Tests with leetcode_session cookie ---
     if LEETCODE_SESSION:
         print("\n--- Testing with leetcode_session and caching ---")
-
+    
         # Test /topic-gaps endpoint with session as query parameter
         print("Testing /v1/user/{username}/analysis/topic-gaps with session as query (first call)")
         topic_gaps_query_url = f"{topic_gaps_url}?leetcode_session_query={LEETCODE_SESSION}"
@@ -102,11 +103,15 @@ def test_api():
 
 
 if __name__ == "__main__":
-    # Clear cache before running tests
     if len(sys.argv) > 1 and sys.argv[1] == "local":
         BASE_URL = LOCAL_BASE_URL
     else:
         BASE_URL = DEPLOYED_BASE_URL
+    
+    CHECK_NORMAL = True
+    if len(sys.argv) > 2 and sys.argv[2] == "not-normal":
+        CHECK_NORMAL = False
+        
     cache_file = f"/tmp/cache/{USERNAME}_data.json"
     if os.path.exists(cache_file):
         os.remove(cache_file)

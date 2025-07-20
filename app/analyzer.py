@@ -6,10 +6,11 @@ from . import leetcode_client
 from .data_manager import DataManager
 
 CACHE_DIR = "/tmp/cache"
-if not os.path.exists(CACHE_DIR):
-    os.makedirs(CACHE_DIR)
 
 def _get_cache_path(username: str) -> str:
+    # In a serverless environment, it's better to ensure the directory exists
+    # just before you need it.
+    os.makedirs(CACHE_DIR, exist_ok=True)
     return os.path.join(CACHE_DIR, f"{username}_data.json")
 
 def _read_cache(username: str) -> dict | None:
