@@ -1,5 +1,6 @@
 import json
 import re
+import os
 from app.config import settings
 
 class DataManager:
@@ -9,7 +10,9 @@ class DataManager:
 
     def load_and_index_data(self):
         try:
-            with open(settings.question_data_path, 'r') as f:
+            # Ensure the path is constructed correctly for the environment
+            path = settings.question_data_path
+            with open(path, 'r') as f:
                 data = json.load(f)
         except (FileNotFoundError, json.JSONDecodeError):
             print(f"Warning: Could not load data from {settings.question_data_path}")
