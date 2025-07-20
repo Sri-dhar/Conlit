@@ -1,6 +1,7 @@
 import requests
 import json
 import os
+import sys
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -10,7 +11,8 @@ load_dotenv()
 # pip install requests
 
 # The base URL for the local API
-BASE_URL = "https://conlit.vercel.app/"
+DEPLOYED_BASE_URL = "https://conlit.vercel.app/"
+LOCAL_BASE_URL = "http://127.0.0.1:8000"
 USERNAME = "sridhartuli"
 LEETCODE_SESSION = os.getenv("leetcode_session")
 
@@ -101,6 +103,10 @@ def test_api():
 
 if __name__ == "__main__":
     # Clear cache before running tests
+    if len(sys.argv) > 1 and sys.argv[1] == "local":
+        BASE_URL = LOCAL_BASE_URL
+    else:
+        BASE_URL = DEPLOYED_BASE_URL
     cache_file = f"/tmp/cache/{USERNAME}_data.json"
     if os.path.exists(cache_file):
         os.remove(cache_file)
