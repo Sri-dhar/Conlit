@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Depends, Header, Cookie
+from fastapi import FastAPI, Depends, Header, Cookie, Response
 from typing import Optional
 from app.data_manager import DataManager
 from app import services
@@ -16,6 +16,10 @@ def startup_event():
 
 def get_data_manager():
     return data_manager
+
+@app.get("/favicon.ico", include_in_schema=False)
+async def favicon():
+    return Response(status_code=204)
 
 @app.get("/")
 def read_root():

@@ -1,5 +1,7 @@
 import httpx
 import os
+import asyncio
+from typing import List, Set, Tuple
 
 LEETCODE_GRAPHQL_URL = "https://leetcode.com/graphql"
 BASE_URL = "https://leetcode.com"
@@ -232,40 +234,59 @@ def get_user_submission_count(username: str):
         print(f"An error occurred fetching submission count for {username}: {e}")
         return None
 
-def get_solved_questions(username: str, cookie: str, is_cn: bool = False):
+async def _fetch_submissions_page(client: httpx.AsyncClient, offset: int, limit: int, headers: dict) -> Tuple[List[dict], bool]:
+    variables = {"offset": offset, "limit": limit, "questionSlug": ""}
+    payload = {"query": SUBMISSIONS_QUERY, "variables": variables}
+    
+    try:
+        response = await client.post(LEETCODE_GRAPHQL_URL, json=payload, headers=headers, timeout=30)
+        response.raise_for_status()
+        data = response.json()
+
+        if "errors" in data:
+            if any("session" in error.get("message", "").lower() for error in data.get("errors", [])):
+                print("Warning: Authentication failed during submission fetch.")
+            else:
+                print(f"Warning: GraphQL error on page fetch: {data['errors']}")
+            return [], False
+
+        submission_list = data.get("data", {}).get("submissionList", {})
+        submissions = submission_list.get("submissions", [])
+        has_next = submission_list.get("hasNext", False)
+        return submissions, has_next
+    except httpx.HTTPStatusError as e:
+        print(f"Warning: HTTP error on page fetch: {e.response.status_code}")
+        return [], False
+    except Exception as e:
+        print(f"An unexpected error occurred during page fetch: {e}")
+        return [], False
+
+def get_solved_questions(username: str, cookie: str, is_cn: bool = False) -> List[str]:
     """
     Fetches all solved questions for a given LeetCode username and session cookie.
+    Uses asyncio for concurrent fetching of initial pages.
     """
     if not cookie:
         raise ValueError("LEETCODE_SESSION cookie is required for this operation.")
 
-    base_url = BASE_URL
-    graphql_url = f"{base_url}/graphql"
-    
     headers = {
         "Content-Type": "application/json",
         "Cookie": f"LEETCODE_SESSION={cookie}",
-        "Referer": base_url,
+        "Referer": BASE_URL,
     }
 
-    profile_payload = {
-        "query": USER_PROFILE_QUERY,
-        "variables": {"username": username},
-    }
-    
-    try:
-        response = httpx.post(graphql_url, json=profile_payload, headers=headers, timeout=30)
-        response.raise_for_status()
-        profile_data = response.json()
-    except httpx.HTTPStatusError as e:
-        raise Exception(f"Failed to fetch user profile: {e.response.status_code}")
-    
+    with httpx.Client() as client:
+        profile_payload = {"query": USER_PROFILE_QUERY, "variables": {"username": username}}
+        try:
+            response = client.post(LEETCODE_GRAPHQL_URL, json=profile_payload, headers=headers, timeout=30)
+            response.raise_for_status()
+            profile_data = response.json()
+        except httpx.HTTPStatusError as e:
+            raise Exception(f"Failed to fetch user profile: {e.response.status_code}")
+
     if "errors" in profile_data:
-        # Check for auth-related errors
-        if any("session" in error.get("message", "").lower() for error in profile_data["errors"]):
-            raise Exception("Authentication failed. Your LEETCODE_SESSION cookie may be invalid or expired.")
         raise Exception(f"GraphQL error on profile fetch: {profile_data['errors']}")
-
+    
     matched_user = profile_data.get("data", {}).get("matchedUser")
     if not matched_user:
         raise Exception(f"User '{username}' not found.")
@@ -278,55 +299,37 @@ def get_solved_questions(username: str, cookie: str, is_cn: bool = False):
 
     print(f"Found {total_solved} solved questions for user {username}. Fetching titles...")
 
-    solved_questions = set()
+    return asyncio.run(_fetch_all_solved(total_solved, headers))
+
+async def _fetch_all_solved(total_solved: int, headers: dict) -> List[str]:
+    solved_questions: Set[str] = set()
+    limit = 100
     offset = 0
-    limit = 20
-    page_num = 0
-
-    while len(solved_questions) < total_solved:
-        page_num += 1
-        if page_num > (total_solved // limit) + 5: # Increased safeguard
-            print("Warning: Exceeded expected number of pages. Terminating.")
-            break
-
-        variables = {"offset": offset, "limit": limit, "questionSlug": ""}
-        payload = {"query": SUBMISSIONS_QUERY, "variables": variables}
-        
-        try:
-            response = httpx.post(graphql_url, json=payload, headers=headers, timeout=30)
-            response.raise_for_status()
-            data = response.json()
-        except httpx.HTTPStatusError as e:
-            print(f"Warning: HTTP error on page {page_num}: {e.response.status_code}")
-            break # Stop fetching on error
-
-        if "errors" in data:
-            if any("session" in error.get("message", "").lower() for error in data["errors"]):
-                print("Warning: Authentication failed while fetching submissions. Returning partial list.")
-                break
-            print(f"Warning: GraphQL error on page {page_num}: {data['errors']}")
-            break
-
-        submission_list = data.get("data", {}).get("submissionList")
-        if not submission_list or not submission_list.get("submissions"):
-            print(f"Warning: No submissions found on page {page_num}. Ending fetch.")
-            break
-
-        submissions = submission_list["submissions"]
-        found_new = False
-        for sub in submissions:
-            if sub["statusDisplay"] == "Accepted":
-                if sub["title"] not in solved_questions:
+    has_next = True
+    
+    async with httpx.AsyncClient() as client:
+        while has_next:
+            submissions, has_next = await _fetch_submissions_page(client, offset, limit, headers)
+            
+            if not submissions:
+                print(f"Warning: No submissions returned at offset {offset}.")
+            
+            for sub in submissions:
+                if sub["statusDisplay"] == "Accepted":
                     solved_questions.add(sub["title"])
-                    found_new = True
-        
-        if not found_new and page_num > 1:
-            print("Warning: No new solved questions found. The API might be returning duplicates.")
-            break
 
-        offset += limit
+            offset += limit
+
+            if offset > total_solved + (limit * 10): 
+                print("Warning: Exceeded expected number of pages by a large margin. Stopping.")
+                break
+            
+            await asyncio.sleep(0.5)
+
+    if len(solved_questions) < total_solved:
+        print(f"Warning: Fetched {len(solved_questions)} unique solved questions, but expected a total of {total_solved}.")
 
     if not solved_questions:
-        print("Warning: Could not retrieve any solved questions. Check your LEETCODE_SESSION cookie.")
+        print("Warning: Could not retrieve any solved questions despite finding a total count.")
 
     return list(solved_questions)
