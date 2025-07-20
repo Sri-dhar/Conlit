@@ -73,7 +73,8 @@ def get_user_profile(username: str):
         
         headers = {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            'Referer': BASE_URL
         }
 
         response = httpx.post(leetcode_url, json=payload, headers=headers, timeout=30)
@@ -127,7 +128,8 @@ def get_user_contest_history(username: str):
         
         headers = {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            'Referer': BASE_URL
         }
 
         response = httpx.post(leetcode_url, json=payload, headers=headers)
@@ -168,7 +170,8 @@ def get_user_submissions(username: str, limit: int = 20):
         
         headers = {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            'Referer': BASE_URL
         }
 
         response = httpx.post(leetcode_url, json=payload, headers=headers)
@@ -212,7 +215,8 @@ def get_user_submission_count(username: str):
         
         headers = {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            'Referer': BASE_URL
         }
 
         response = httpx.post(leetcode_url, json=payload, headers=headers)
