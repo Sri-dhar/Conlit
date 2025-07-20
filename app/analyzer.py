@@ -2,6 +2,7 @@ import re
 import random
 import os
 import json
+from typing import Union
 from . import leetcode_client
 from .data_manager import DataManager
 
@@ -13,7 +14,7 @@ def _get_cache_path(username: str) -> str:
     os.makedirs(CACHE_DIR, exist_ok=True)
     return os.path.join(CACHE_DIR, f"{username}_data.json")
 
-def _read_cache(username: str) -> dict | None:
+def _read_cache(username: str) -> Union[dict, None]:
     cache_path = _get_cache_path(username)
     if os.path.exists(cache_path):
         with open(cache_path, 'r') as f:
