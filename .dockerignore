@@ -27,6 +27,4 @@ pip-delete-this-directory.txt
 
 # Other
 .env
-data/
-cache/
 test/
