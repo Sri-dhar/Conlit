@@ -6,12 +6,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-# This script tests the Conlit API.
-# To run this script, you need to install the 'requests' library:
-# pip install requests
-
-# The base URL for the local API
-DEPLOYED_BASE_URL = "https://conlit.vercel.app/"
+DEPLOYED_BASE_URL = "http://15.206.165.26:8080/"
 LOCAL_BASE_URL = "http://127.0.0.1:8000"
 USERNAME = "sridhartuli"
 LEETCODE_SESSION = os.getenv("leetcode_session")
