@@ -50,14 +50,14 @@ def generate_coaching_plan(username: str, data_manager) -> dict:
     )
     
     try:
+        # print("===================PROMPT========================")
+        # print(prompt)
+        # print("===================PROMPT========================")
         response = model.generate_content(prompt)
         text = response.text.strip()
-        if text.startswith("```json"):
-            text = text[7:]
-        if text.endswith("```"):
-            text = text[:-3]
+        # Clean the response to extract only the JSON part
+        text = text[text.find('{'):text.rfind('}')+1]
         
-        # TODO: validate the JSON response here
         return json.loads(text)
     except Exception as e:
         return {"error": f"Error generating coaching plan: {e}"}

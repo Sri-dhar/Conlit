@@ -3,7 +3,6 @@ import json
 import os
 from dotenv import load_dotenv
 
-# Load environment variables from .env file
 load_dotenv()
 
 # This script tests the Conlit API.
@@ -72,28 +71,27 @@ def test_api():
 
     # --- Tests with leetcode_session cookie ---
     if LEETCODE_SESSION:
-        print("\n--- Testing with leetcode_session cookie ---")
-
-        # Test /analysis endpoint with cookie
-        print("Testing /v1/user/{username}/analysis with cookie")
-        analysis_cookie_url = f"{analysis_url}?leetcode_session={LEETCODE_SESSION}"
-        response = requests.get(analysis_cookie_url)
-        print_response(response)
+        print("\n--- Testing with leetcode_session cookie and caching ---")
 
         # Test /topic-gaps endpoint with cookie
-        print("Testing /v1/user/{username}/analysis/topic-gaps with cookie")
+        print("Testing /v1/user/{username}/analysis/topic-gaps with cookie (first call)")
         topic_gaps_cookie_url = f"{topic_gaps_url}?leetcode_session={LEETCODE_SESSION}"
         response = requests.get(topic_gaps_cookie_url)
         print_response(response)
 
-        # Test /nemesis-problems endpoint with cookie
-        print("Testing /v1/user/{username}/analysis/nemesis-problems with cookie")
-        nemesis_cookie_url = f"{nemesis_url}?leetcode_session={LEETCODE_SESSION}"
-        response = requests.get(nemesis_cookie_url)
+        print("Testing /v1/user/{username}/analysis/topic-gaps with cookie (second call - should be cached)")
+        response = requests.get(topic_gaps_cookie_url)
         print_response(response)
+
     else:
         print("\nSkipping cookie-based tests: leetcode_session not found in .env file.")
 
 
 if __name__ == "__main__":
+    # Clear cache before running tests
+    cache_file = f"cache/{USERNAME}_data.json"
+    if os.path.exists(cache_file):
+        os.remove(cache_file)
+        print(f"Cleared cache file: {cache_file}")
+        
     test_api()

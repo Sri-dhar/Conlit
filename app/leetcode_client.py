@@ -74,7 +74,7 @@ def get_user_profile(username: str):
             'Content-Type': 'application/json'
         }
 
-        response = httpx.post(leetcode_url, json=payload, headers=headers)
+        response = httpx.post(leetcode_url, json=payload, headers=headers, timeout=30)
         response.raise_for_status()
         
         data = response.json()
@@ -186,6 +186,52 @@ def get_user_submissions(username: str, limit: int = 20):
         print(f"An error occurred fetching submissions for {username}: {e}")
         return []
 
+def get_user_submission_count(username: str):
+    """
+    Fetches the total number of submissions for a given LeetCode username.
+    """
+    try:
+        leetcode_url = LEETCODE_GRAPHQL_URL
+        query = """query userPublicProfile($username: String!) {
+            matchedUser(username: $username) {
+                submitStats {
+                    totalSubmissionNum {
+                        count
+                    }
+                }
+            }
+        }"""
+        
+        payload = {
+            "query": query,
+            "variables": {"username": username},
+            "operationName": "userPublicProfile"
+        }
+        
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+            'Content-Type': 'application/json'
+        }
+
+        response = httpx.post(leetcode_url, json=payload, headers=headers)
+        response.raise_for_status()
+        
+        data = response.json()
+        
+        if not data.get("data", {}).get("matchedUser"):
+            print(f"User not found: {username}")
+            return None
+        
+        total_submission_num = data["data"]["matchedUser"]["submitStats"]["totalSubmissionNum"]
+        return sum(item['count'] for item in total_submission_num)
+
+    except httpx.HTTPStatusError as e:
+        print(f"HTTP Error fetching submission count for {username}: {e.response.status_code} - {e.response.text}")
+        return None
+    except Exception as e:
+        print(f"An error occurred fetching submission count for {username}: {e}")
+        return None
+
 def get_solved_questions(username: str, cookie: str, is_cn: bool = False):
     """
     Fetches all solved questions for a given LeetCode username and session cookie.
@@ -212,7 +258,7 @@ def get_solved_questions(username: str, cookie: str, is_cn: bool = False):
         "query": USER_PROFILE_QUERY,
         "variables": {"username": username},
     }
-    response = httpx.post(graphql_url, json=profile_payload, headers=headers)
+    response = httpx.post(graphql_url, json=profile_payload, headers=headers, timeout=30)
     profile_data = response.json()
     
     if "errors" in profile_data:
@@ -249,7 +295,7 @@ def get_solved_questions(username: str, cookie: str, is_cn: bool = False):
             "variables": variables,
         }
         
-        response = httpx.post(graphql_url, json=payload, headers=headers)
+        response = httpx.post(graphql_url, json=payload, headers=headers, timeout=30)
         data = response.json()
 
         print(f"Fetched page {offset // limit + 1}...")
