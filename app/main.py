@@ -1,4 +1,5 @@
-from fastapi import FastAPI, Depends
+from fastapi import FastAPI, Depends, Header, Cookie
+from typing import Optional
 from app.data_manager import DataManager
 from app import services
 
@@ -30,13 +31,37 @@ def get_user_profile(username: str):
     return services.get_user_profile(username)
 
 @app.get("/v1/user/{username}/analysis")
-def get_user_analysis(username: str, coach: bool = False, leetcode_session: str = None, dm: DataManager = Depends(get_data_manager)):
+def get_user_analysis(
+    username: str,
+    coach: bool = False,
+    leetcode_session_query: Optional[str] = None,
+    leetcode_session_cookie: Optional[str] = Cookie(None),
+    leetcode_session_header: Optional[str] = Header(None),
+    dm: DataManager = Depends(get_data_manager)
+):
+    leetcode_session = leetcode_session_query or leetcode_session_cookie or leetcode_session_header
     return services.get_full_analysis(username, coach, dm, leetcode_session)
 
 @app.get("/v1/user/{username}/analysis/topic-gaps")
-def get_topic_gaps(username: str, coach: bool = False, leetcode_session: str = None, dm: DataManager = Depends(get_data_manager)):
+def get_topic_gaps(
+    username: str,
+    coach: bool = False,
+    leetcode_session_query: Optional[str] = None,
+    leetcode_session_cookie: Optional[str] = Cookie(None),
+    leetcode_session_header: Optional[str] = Header(None),
+    dm: DataManager = Depends(get_data_manager)
+):
+    leetcode_session = leetcode_session_query or leetcode_session_cookie or leetcode_session_header
     return services.get_topic_gaps_analysis(username, coach, dm, leetcode_session)
 
 @app.get("/v1/user/{username}/analysis/nemesis-problems")
-def get_nemesis_problems(username: str, coach: bool = False, leetcode_session: str = None, dm: DataManager = Depends(get_data_manager)):
+def get_nemesis_problems(
+    username: str,
+    coach: bool = False,
+    leetcode_session_query: Optional[str] = None,
+    leetcode_session_cookie: Optional[str] = Cookie(None),
+    leetcode_session_header: Optional[str] = Header(None),
+    dm: DataManager = Depends(get_data_manager)
+):
+    leetcode_session = leetcode_session_query or leetcode_session_cookie or leetcode_session_header
     return services.get_nemesis_problems_analysis(username, coach, dm, leetcode_session)

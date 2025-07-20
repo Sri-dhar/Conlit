@@ -71,20 +71,32 @@ def test_api():
 
     # --- Tests with leetcode_session cookie ---
     if LEETCODE_SESSION:
-        print("\n--- Testing with leetcode_session cookie and caching ---")
+        print("\n--- Testing with leetcode_session and caching ---")
 
-        # Test /topic-gaps endpoint with cookie
-        print("Testing /v1/user/{username}/analysis/topic-gaps with cookie (first call)")
-        topic_gaps_cookie_url = f"{topic_gaps_url}?leetcode_session={LEETCODE_SESSION}"
-        response = requests.get(topic_gaps_cookie_url)
+        # Test /topic-gaps endpoint with session as query parameter
+        print("Testing /v1/user/{username}/analysis/topic-gaps with session as query (first call)")
+        topic_gaps_query_url = f"{topic_gaps_url}?leetcode_session_query={LEETCODE_SESSION}"
+        response = requests.get(topic_gaps_query_url)
         print_response(response)
 
-        print("Testing /v1/user/{username}/analysis/topic-gaps with cookie (second call - should be cached)")
-        response = requests.get(topic_gaps_cookie_url)
+        print("Testing /v1/user/{username}/analysis/topic-gaps with session as query (second call - should be cached)")
+        response = requests.get(topic_gaps_query_url)
+        print_response(response)
+
+        # Test /topic-gaps endpoint with session as header
+        print("Testing /v1/user/{username}/analysis/topic-gaps with session as header (should be cached)")
+        headers = {"leetcode_session_header": LEETCODE_SESSION}
+        response = requests.get(topic_gaps_url, headers=headers)
+        print_response(response)
+        
+        # Test /topic-gaps endpoint with session as cookie
+        print("Testing /v1/user/{username}/analysis/topic-gaps with session as cookie (should be cached)")
+        cookies = {"leetcode_session_cookie": LEETCODE_SESSION}
+        response = requests.get(topic_gaps_url, cookies=cookies)
         print_response(response)
 
     else:
-        print("\nSkipping cookie-based tests: leetcode_session not found in .env file.")
+        print("\nSkipping session-based tests: leetcode_session not found in .env file.")
 
 
 if __name__ == "__main__":
