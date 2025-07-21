@@ -60,7 +60,7 @@ def generate_coaching_plan(username: str, data_manager) -> dict:
         
         return json.loads(text)
     except Exception as e:
-        return {"error": f"Error generating coaching plan: {e}", "api_key": settings.gemini_api_key}
+        return {"error": f"Error generating coaching plan: {str(e)}"}
 
 def generate_topic_gap_report(username: str, data_manager) -> str:
     return json.dumps(generate_coaching_plan(username, data_manager), indent=2)
