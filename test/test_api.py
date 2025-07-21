@@ -6,9 +6,9 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-DEPLOYED_BASE_URL = "http://15.206.165.26:8080/"
-LOCAL_BASE_URL = "http://127.0.0.1:8000"
-USERNAME = "sridhartuli"
+DEPLOYED_BASE_URL = os.getenv("DEPLOYED_BASE_URL")
+LOCAL_BASE_URL = os.getenv("LOCAL_BASE_URL")
+USERNAME = os.getenv("USERNAME")
 LEETCODE_SESSION = os.getenv("leetcode_session")
 
 def print_response(response):

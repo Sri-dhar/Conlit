@@ -5,6 +5,9 @@ from typing import Optional
 class Settings(BaseSettings):
     gemini_api_key: str
     leetcode_session: Optional[str] = None
+    DEPLOYED_BASE_URL: str
+    LOCAL_BASE_URL: str
+    USERNAME: str
     
     data_dir: str = "data"
 
